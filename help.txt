@@ -1,0 +1,18 @@
+Установить
+~/GolandProjects/GRPCADDER
+go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+~/GolandProjects/GRPCADDER
+go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+
+Убедиться, что папка с установленными Go-бинарными файлами добавлена в ваш PATH. Например, если Go установлена
+стандартным образом, то бинарные файлы обычно находятся в ~/go/bin, и нужно добавить это в PATH:
+export PATH="$PATH:$(go env GOPATH)/bin"
+
+Файл ~/GolandProjects/GRPCADDER/api/proto/adder.proto:
+syntax = "proto3";
+package api;
+option go_package = "pkg/api";
+
+Команда генерации в ~/GolandProjects/GRPCADDER/pkg/api:
+~/GolandProjects/GRPCADDER
+protoc -I api/proto --go_out=. --go-grpc_out=. api/proto/adder.proto
