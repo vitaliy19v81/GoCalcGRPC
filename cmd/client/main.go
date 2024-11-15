@@ -16,7 +16,7 @@ import (
 var grpcClient pb.CalculatorClient
 
 func init() {
-	conn, err := grpc.Dial("localhost:50051", grpc.WithInsecure()) // Подключение к gRPC-серверу на порту 50051
+	conn, err := grpc.Dial("192.168.31.214:50051", grpc.WithInsecure()) // Подключение к gRPC-серверу на порту 50051
 	if err != nil {
 		log.Fatalf("Не удалось подключиться к gRPC-серверу: %v", err)
 	}

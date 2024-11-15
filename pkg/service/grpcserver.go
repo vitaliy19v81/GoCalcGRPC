@@ -10,8 +10,8 @@ type GRPCServer struct {
 	pb.UnimplementedCalculatorServer // Встраивание gRPC-сервера с пустой реализацией
 }
 
-// Add ...
-func (s *GRPCServer) Add(ctx context.Context, req *pb.CalculationRequest) (*pb.CalculationResponse, error) {
+// Calculate ...
+func (s *GRPCServer) Calculate(ctx context.Context, req *pb.CalculationRequest) (*pb.CalculationResponse, error) {
 	operation := req.GetOperation()
 	switch operation {
 	case "add":
