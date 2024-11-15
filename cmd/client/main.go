@@ -1,7 +1,7 @@
 package main
 
 import (
-	pb "GRPCADDER/pkg/api" //"path/to/your/proto" // Укажите путь к сгенерированному proto-коду
+	pb "GRPCADDER/pkg/api/proto" //"path/to/your/proto" // Укажите путь к сгенерированному proto-коду
 	"context"
 	"fmt"
 	"google.golang.org/grpc"
@@ -13,14 +13,14 @@ import (
 )
 
 // Подключение к gRPC-серверу
-var grpcClient pb.AdderClient
+var grpcClient pb.CalculatorClient
 
 func init() {
 	conn, err := grpc.Dial("localhost:50051", grpc.WithInsecure()) // Подключение к gRPC-серверу на порту 50051
 	if err != nil {
 		log.Fatalf("Не удалось подключиться к gRPC-серверу: %v", err)
 	}
-	grpcClient = pb.NewAdderClient(conn)
+	grpcClient = pb.NewCalculatorClient(conn)
 }
 
 func main() {
@@ -87,8 +87,8 @@ func doCalc(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 
 	// Создаем gRPC-запрос в зависимости от операции
-	request := &pb.AddRequest{X: int32(data.Num1), Y: int32(data.Num2), Operation: data.Operation}
-	response, err := grpcClient.Add(ctx, request)
+	request := &pb.CalculationRequest{X: int32(data.Num1), Y: int32(data.Num2), Operation: data.Operation}
+	response, err := grpcClient.Calculate(ctx, request)
 	if err != nil {
 		data.Error = fmt.Sprintf("Ошибка при вызове gRPC-сервера: %v", err)
 		t.Execute(w, data)

@@ -1,8 +1,8 @@
 package main
 
 import (
-	"GRPCADDER/pkg/adder"
-	"GRPCADDER/pkg/api"
+	pb "GRPCADDER/pkg/api/proto"
+	"GRPCADDER/pkg/service"
 	"google.golang.org/grpc"
 	"log"
 	"net"
@@ -10,8 +10,8 @@ import (
 
 func main() {
 	s := grpc.NewServer()
-	srv := &adder.GRPCServer{}
-	api.RegisterAdderServer(s, srv)
+	srv := &service.GRPCServer{}
+	pb.RegisterCalculatorServer(s, srv)
 
 	l, err := net.Listen("tcp", ":50051")
 	if err != nil {

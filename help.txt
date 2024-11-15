@@ -11,8 +11,8 @@ export PATH="$PATH:$(go env GOPATH)/bin"
 Файл ~/GolandProjects/GRPCADDER/api/proto/adder.proto:
 syntax = "proto3";
 package api;
-option go_package = "pkg/api";
+option go_package = "pkg/api/proto";
 
 Команда генерации в ~/GolandProjects/GRPCADDER/pkg/api:
 ~/GolandProjects/GRPCADDER
-protoc -I api/proto --go_out=. --go-grpc_out=. api/proto/adder.proto
+protoc -I=pkg/api/proto --go_out=. --go-grpc_out=. pkg/api/proto/calculator.proto
