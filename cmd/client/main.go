@@ -4,11 +4,15 @@ import (
 	pb "GRPCADDER/pkg/api/proto" //"path/to/your/proto" // Укажите путь к сгенерированному proto-коду
 	"context"
 	"fmt"
+	"github.com/golang-jwt/jwt/v5"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/metadata"
 	"html/template"
 	"log"
 	"net/http"
 	"strconv"
+	"time"
 	// "flag"
 )
 
@@ -16,30 +20,41 @@ import (
 var grpcClient pb.CalculatorClient
 
 func init() {
-	conn, err := grpc.Dial("192.168.31.214:50051", grpc.WithInsecure()) // Подключение к gRPC-серверу на порту 50051
+	// адрес удаленного компьютера (можно узнать на удаленном компьютере
+	// или ip route get 1.1.1.1
+	// или hostname -I
+	// или ip -o -f inet addr show
+	// или ip a
+	// )
+
+	// Подключение к gRPC-серверу на порту 50051
+	conn, err := grpc.NewClient("192.168.31.214:50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	//conn, err := grpc.Dial("192.168.31.214:50051", grpc.WithInsecure()) // Устарело
 	if err != nil {
 		log.Fatalf("Не удалось подключиться к gRPC-серверу: %v", err)
 	}
 	grpcClient = pb.NewCalculatorClient(conn)
 }
 
+// secretKey - ключ для подписи JWT
+var secretKey = []byte("my-secret-key") //TODO перенести в секреты
+
+func generateJWT(userID string) (string, error) {
+	claims := jwt.RegisteredClaims{
+		Subject:   userID,
+		ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour)), // Токен на 1 час
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	return token.SignedString(secretKey)
+}
+
+// Запускать на клиенте
 func main() {
-	http.HandleFunc("/", home)
-	http.HandleFunc("/calculator", calculator)
+	http.HandleFunc("/", calculator)
 	http.HandleFunc("/doCalc", doCalc)
 
 	http.ListenAndServe("localhost:8080", nil)
-}
-
-func home(w http.ResponseWriter, r *http.Request) {
-	t, _ := template.ParseFiles("cmd/client/tmpl/home.html")
-
-	Marketing := struct {
-		Message string
-	}{
-		Message: "Наше сообщение",
-	}
-	t.Execute(w, Marketing)
 }
 
 type dataForCalc struct {
@@ -82,9 +97,15 @@ func doCalc(w http.ResponseWriter, r *http.Request) {
 
 	data.Operation = r.FormValue("operation")
 
+	// Получаем JWT-токен (должен быть сгенерирован заранее)
+	token, _ := generateJWT("user123")
+
+	// Создаём метаданные с токеном
+	ctx := metadata.NewOutgoingContext(context.Background(), metadata.Pairs("authorization", "Bearer "+token))
+
 	// Отправляем данные на gRPC-сервер
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	//ctx, cancel := context.WithCancel(context.Background())
+	//defer cancel()
 
 	// Создаем gRPC-запрос в зависимости от операции
 	request := &pb.CalculationRequest{X: int32(data.Num1), Y: int32(data.Num2), Operation: data.Operation}
@@ -105,44 +126,3 @@ func doCalc(w http.ResponseWriter, r *http.Request) {
 		fmt.Printf("error: %s\n", err)
 	}
 }
-
-//package main
-//
-//import (
-//	"GRPCADDER/pkg/api"
-//	"context"
-//	"flag"
-//	"google.golang.org/grpc"
-//	"log"
-//	"strconv"
-//)
-//
-//func main() {
-//	flag.Parse()
-//	args := flag.Args()
-//	if len(args) < 2 {
-//		log.Fatal("not enough arguments")
-//	}
-//
-//	x, err := strconv.Atoi(args[0])
-//	if err != nil {
-//		log.Fatal(err)
-//	}
-//
-//	y, err := strconv.Atoi(args[1])
-//	if err != nil {
-//		log.Fatal(err)
-//	}
-//
-//	conn, err := grpc.Dial(":8080", grpc.WithInsecure())
-//	if err != nil {
-//		log.Fatal(err)
-//	}
-//
-//	c := api.NewAdderClient(conn)
-//	res, err := c.Add(context.Background(), &api.AddRequest{X: int32(x), Y: int32(y)})
-//	if err != nil {
-//		log.Fatal(err)
-//	}
-//	log.Println(res.GetResult())
-//}
